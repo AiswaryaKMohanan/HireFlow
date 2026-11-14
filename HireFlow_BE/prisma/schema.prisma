@@ -1,0 +1,83 @@
+
+// Prisma schema for HireFlow
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  role         String      @default("recruiter")
+  active       Boolean     @default(true)
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  candidates   Candidate[]
+  jobs         Job[]
+
+  @@map("users")
+}
+
+model Candidate {
+  id          Int           @id @default(autoincrement())
+  fullName    String        @map("full_name")
+  email       String?
+  phone       String?
+  passportNo  String?       @map("passport_no")
+  jobProfile  String?       @map("job_profile")
+  stage       String        @default("registered")
+  recruiterId Int?          @map("recruiter_id")
+  recruiter   User?         @relation(fields: [recruiterId], references: [id], onDelete: SetNull)
+  applications Application[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@index([recruiterId])
+  @@map("candidates")
+}
+
+model Job {
+  id             Int           @id @default(autoincrement())
+  title          String
+  description    String
+  department     String?
+  location       String?
+  employmentType String?       @map("employment_type")
+  salaryMin      Decimal?      @map("salary_min") @db.Decimal(12, 2)
+  salaryMax      Decimal?      @map("salary_max") @db.Decimal(12, 2)
+  status         String        @default("open")
+  recruiterId    Int           @map("recruiter_id")
+  recruiter      User          @relation(fields: [recruiterId], references: [id])
+  applications   Application[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@index([recruiterId])
+  @@index([status])
+  @@map("jobs")
+}
+
+model Application {
+  id          Int       @id @default(autoincrement())
+  candidateId Int       @map("candidate_id")
+  jobId       Int       @map("job_id")
+  status      String    @default("applied")
+  notes       String?
+  appliedAt   DateTime  @default(now()) @map("applied_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, jobId])
+  @@index([jobId])
+  @@index([status])
+  @@map("applications")
+}
