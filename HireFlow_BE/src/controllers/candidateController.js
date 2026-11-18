@@ -62,3 +62,101 @@ export const getCandidates = async (req, res) => {
     data: candidates,
   });
 };
+
+
+export const getcandidateById = async(req,res)=>{
+
+const {id }= req.params;
+const candidate = await prisma.candidate.findUnique({
+    where:{
+        id :Number(id)
+    }
+});
+if (!candidate) {
+    return res.status(404).json({
+      success: false,
+      message: 'Candidate not found',
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: candidate,
+  });
+}
+
+
+export const deleteCandidateById = async (req,res)=>{
+    const{id}=req.params
+    const candidate = await prisma.candidate.findMany({
+        where:{
+            id:Number(id)
+        }
+    });
+    if (!candidate) {
+    return res.status(404).json({
+      success: false,
+      message: 'Candidate not found',
+    });
+  }
+  await prisma.candidate.delete({
+    where: {
+      id: Number(id),
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Candidate deleted successfully',
+  });
+};
+
+
+
+export const updateCandidate = async (req, res) => {
+  const { id } = req.params;
+
+  const {
+    fullName,
+    email,
+    phone,
+    passportNo,
+    jobProfile,
+    stage,
+  } = req.body;
+
+  // Check whether candidate exists
+  const existingCandidate = await prisma.candidate.findUnique({
+    where: {
+      id: Number(id),
+    },
+  });
+
+  if (!existingCandidate) {
+    return res.status(404).json({
+      success: false,
+      message: 'Candidate not found',
+    });
+  }
+
+  // Update candidate
+  const candidate = await prisma.candidate.update({
+    where: {
+      id: Number(id),
+    },
+    data: {
+      fullName,
+      email,
+      phone,
+      passportNo,
+      jobProfile,
+      stage,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Candidate updated successfully',
+    data: candidate,
+  });
+};
