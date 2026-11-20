@@ -88,7 +88,7 @@ if (!candidate) {
 
 export const deleteCandidateById = async (req,res)=>{
     const{id}=req.params
-    const candidate = await prisma.candidate.findMany({
+    const candidate = await prisma.candidate.findUnique({
         where:{
             id:Number(id)
         }
