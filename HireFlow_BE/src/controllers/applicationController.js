@@ -125,3 +125,70 @@ export const getApplicationById = async (req, res) => {
     data: application,
   });
 };
+
+export const updateApplication = async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid application ID',
+    });
+  }
+
+  const { status, notes } = req.body || {};
+  const data = {};
+
+  if (status !== undefined) {
+    if (typeof status !== 'string' || !status.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be a non-empty string',
+      });
+    }
+    data.status = status.trim();
+  }
+
+  if (notes !== undefined) {
+    if (notes !== null && typeof notes !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Notes must be a string or null',
+      });
+    }
+    data.notes = notes;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'At least one of status or notes must be provided',
+    });
+  }
+
+  const existingApplication = await prisma.application.findUnique({
+    where: { id },
+  });
+
+  if (!existingApplication) {
+    return res.status(404).json({
+      success: false,
+      message: 'Application not found',
+    });
+  }
+
+  const application = await prisma.application.update({
+    where: { id },
+    data,
+    include: {
+      candidate: true,
+      job: true,
+    },
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Application updated successfully',
+    data: application,
+  });
+};
